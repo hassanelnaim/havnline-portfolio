@@ -6,10 +6,10 @@ import { DashboardShell, type NavItem } from "@/components/layout/shell";
 export const dynamic = "force-dynamic";
 
 const NAV_ITEMS: NavItem[] = [
-  { href: "/admin", label: "Overview", icon: LayoutGrid },
-  { href: "/admin/leads", label: "Leads", icon: Users },
-  { href: "/admin/salespeople", label: "Salespeople", icon: UserCog },
-  { href: "/admin/commissions", label: "Commissions", icon: DollarSign },
+  { href: "/admin", label: "Overview", icon: <LayoutGrid className="h-4 w-4" /> },
+  { href: "/admin/leads", label: "Leads", icon: <Users className="h-4 w-4" /> },
+  { href: "/admin/salespeople", label: "Salespeople", icon: <UserCog className="h-4 w-4" /> },
+  { href: "/admin/commissions", label: "Commissions", icon: <DollarSign className="h-4 w-4" /> },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {

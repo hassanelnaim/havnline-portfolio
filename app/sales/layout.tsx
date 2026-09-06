@@ -6,9 +6,9 @@ import { DashboardShell, type NavItem } from "@/components/layout/shell";
 export const dynamic = "force-dynamic";
 
 const NAV_ITEMS: NavItem[] = [
-  { href: "/sales", label: "Overview", icon: LayoutGrid },
-  { href: "/sales/leads", label: "My Leads", icon: Users },
-  { href: "/sales/earnings", label: "Earnings", icon: DollarSign },
+  { href: "/sales", label: "Overview", icon: <LayoutGrid className="h-4 w-4" /> },
+  { href: "/sales/leads", label: "My Leads", icon: <Users className="h-4 w-4" /> },
+  { href: "/sales/earnings", label: "Earnings", icon: <DollarSign className="h-4 w-4" /> },
 ];
 
 export default async function SalesLayout({ children }: { children: React.ReactNode }) {

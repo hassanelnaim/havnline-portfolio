@@ -1,14 +1,14 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { LucideIcon } from "lucide-react";
+import type { ReactNode } from "react";
 import { LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOutAction } from "@/app/actions/auth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { initials } from "@/lib/format";
 
-export interface NavItem { href: string; label: string; icon: LucideIcon; }
+export interface NavItem { href: string; label: string; icon: ReactNode; }
 
 export function DashboardShell({ navItems, roleLabel, userName, children }: { navItems: NavItem[]; roleLabel: string; userName: string; children: React.ReactNode }) {
   const pathname = usePathname();
@@ -25,7 +25,7 @@ export function DashboardShell({ navItems, roleLabel, userName, children }: { na
             const active = item.href === navItems[0].href ? pathname === item.href : pathname.startsWith(item.href);
             return (
               <Link key={item.href} href={item.href} className={cn("flex items-center gap-2.5 rounded-lg px-3 py-2 text-[13px] font-medium transition-colors", active ? "bg-brand text-white" : "text-[#B8C0D0] hover:bg-white/5 hover:text-white")}>
-                <item.icon className="h-4 w-4" />{item.label}
+                {item.icon}{item.label}
               </Link>
             );
           })}
