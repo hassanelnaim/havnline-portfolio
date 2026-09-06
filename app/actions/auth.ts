@@ -8,16 +8,19 @@ export async function signInAction(formData: FormData) {
   const password = formData.get("password") as string;
 
   const supabase = createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
-  if (error) {
-    redirect(`/login?error=${encodeURIComponent(error.message)}`);
+  if (error || !data.user) {
+    redirect(`/login?error=${encodeURIComponent(error?.message || "Could not log in.")}`);
   }
 
-  const { data: { user } } = await supabase.auth.getUser();
-  const { data: profile } = await supabase.from("profiles").select("role").eq("id", user!.id).maybeSingle();
+  const { data: profile, error: profileError } = await supabase.from("profiles").select("role").eq("id", data.user.id).maybeSingle();
 
-  redirect(profile?.role === "admin" ? "/admin" : "/sales");
+  if (profileError || !profile) {
+    redirect(`/login?error=${encodeURIComponent("Your login worked, but no profile was found for this account. Contact your admin.")}`);
+  }
+
+  redirect(profile.role === "admin" ? "/admin" : "/sales");
 }
 
 export async function signOutAction() {
