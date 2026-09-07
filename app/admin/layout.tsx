@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { LayoutGrid, Users, UserCog, DollarSign } from "lucide-react";
+import { LayoutGrid, Users, UserCog, DollarSign, Trophy } from "lucide-react";
 import { getCurrentProfile } from "@/lib/supabase/profile";
 import { DashboardShell, type NavItem } from "@/components/layout/shell";
 
@@ -10,6 +10,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/admin/leads", label: "Leads", icon: <Users className="h-4 w-4" /> },
   { href: "/admin/salespeople", label: "Salespeople", icon: <UserCog className="h-4 w-4" /> },
   { href: "/admin/commissions", label: "Commissions", icon: <DollarSign className="h-4 w-4" /> },
+  { href: "/admin/progression", label: "Progression", icon: <Trophy className="h-4 w-4" /> },
 ];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {

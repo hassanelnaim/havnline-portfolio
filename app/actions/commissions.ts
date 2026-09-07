@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { runProgressionEvaluation } from "@/lib/progression/engine";
 import type { ActionResult } from "./salespeople";
 
 async function requireAdmin(): Promise<void> {
@@ -46,6 +47,10 @@ export async function markFirstMonthCompleteAction(businessId: string): Promise<
   );
   if (commissionError) return { success: false, error: commissionError.message };
 
+  // A real sales event just happened — re-check ranks/milestones/
+  // promotions against this salesperson's actual updated stats.
+  await runProgressionEvaluation(business.assigned_to);
+
   revalidatePath("/admin/commissions");
   revalidatePath(`/admin/businesses/${businessId}`);
   return { success: true };
@@ -75,6 +80,8 @@ export async function markSecondMonthCompleteAction(businessId: string): Promise
     { onConflict: "business_id,commission_number" }
   );
   if (commissionError) return { success: false, error: commissionError.message };
+
+  await runProgressionEvaluation(business.assigned_to);
 
   revalidatePath("/admin/commissions");
   revalidatePath(`/admin/businesses/${businessId}`);
@@ -106,6 +113,11 @@ export async function markCommissionPaidAction(commissionId: string): Promise<Ac
   } else {
     await admin.from("businesses").update({ status: "commission_1_paid" }).eq("id", commission.business_id);
   }
+
+  // Commission actually paid — "commission_earned" milestones (which
+  // deliberately only count PAID, not pending, amounts) may newly
+  // qualify now.
+  await runProgressionEvaluation(commission.salesperson_id);
 
   revalidatePath("/admin/commissions");
   return { success: true };

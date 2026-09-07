@@ -11,6 +11,7 @@ export interface DbProfile {
   role: UserRole;
   phone: string | null;
   is_active: boolean;
+  current_promotion_id: UUID | null;
   created_at: ISODateTime;
 }
 
@@ -91,3 +92,85 @@ export const PIPELINE_LABELS: Record<PipelineStatus, string> = {
   cancelled: "Cancelled",
   no_response: "No Response",
 };
+
+// =========================================================
+// Progression system — ranks, milestones, promotions
+// =========================================================
+
+export interface DbRank {
+  id: UUID;
+  name: string;
+  description: string | null;
+  min_businesses_sold: number;
+  badge_emoji: string;
+  color: string;
+  benefits: string | null;
+  commission_bonus_percent: number;
+  sort_order: number;
+  is_active: boolean;
+  created_at: ISODateTime;
+}
+
+export type MilestoneRequirementType =
+  | "businesses_sold" | "active_businesses" | "commission_earned"
+  | "sales_in_month" | "sales_in_week" | "consecutive_sales_weeks"
+  | "customer_retention" | "revenue_generated" | "custom";
+
+export type RewardType =
+  | "cash_bonus" | "commission_bonus" | "gift_card" | "merchandise"
+  | "promotion" | "rank_advancement" | "recognition" | "special_badge";
+
+export interface DbMilestone {
+  id: UUID;
+  name: string;
+  description: string | null;
+  icon: string;
+  requirement_type: MilestoneRequirementType;
+  requirement_value: number;
+  reward_type: RewardType;
+  reward_description: string | null;
+  reward_amount: number | null;
+  is_active: boolean;
+  is_visible: boolean;
+  sort_order: number;
+  created_at: ISODateTime;
+}
+
+export interface DbSalespersonMilestone {
+  id: UUID;
+  salesperson_id: UUID;
+  milestone_id: UUID;
+  unlocked_at: ISODateTime;
+  reward_status: "pending" | "approved" | "paid";
+  reward_amount: number | null;
+  approved_by: UUID | null;
+  approved_at: ISODateTime | null;
+  paid_at: ISODateTime | null;
+  payment_reference: string | null;
+}
+
+export interface DbPromotion {
+  id: UUID;
+  title: string;
+  description: string | null;
+  required_businesses_sold: number;
+  required_retention_percent: number | null;
+  additional_requirements: Record<string, unknown> | null;
+  benefits: string | null;
+  approval_type: "automatic" | "admin_approval";
+  sort_order: number;
+  is_active: boolean;
+  created_at: ISODateTime;
+}
+
+export interface DbSalespersonPromotion {
+  id: UUID;
+  salesperson_id: UUID;
+  promotion_id: UUID;
+  status: "eligible" | "approved" | "denied";
+  requested_at: ISODateTime;
+  decided_at: ISODateTime | null;
+  decided_by: UUID | null;
+  notes: string | null;
+  requirements_snapshot: Record<string, unknown> | null;
+}
