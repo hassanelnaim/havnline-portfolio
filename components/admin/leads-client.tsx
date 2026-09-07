@@ -11,7 +11,6 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
-import { StatusBadge } from "@/components/leads/status-badge";
 
 export function LeadsClient({ initialBusinesses, salespeople }: { initialBusinesses: DbBusiness[]; salespeople: DbProfile[] }) {
   const router = useRouter();
@@ -75,6 +74,26 @@ export function LeadsClient({ initialBusinesses, salespeople }: { initialBusines
     });
   }
 
+  const allFilteredSelected = filtered.length > 0 && filtered.every((b) => selected.has(b.id));
+
+  function toggleSelectAll() {
+    if (allFilteredSelected) {
+      // Deselect exactly the currently-visible/filtered rows, leaving
+      // any selections outside the current filter untouched.
+      setSelected((prev) => {
+        const next = new Set(prev);
+        filtered.forEach((b) => next.delete(b.id));
+        return next;
+      });
+    } else {
+      setSelected((prev) => {
+        const next = new Set(prev);
+        filtered.forEach((b) => next.add(b.id));
+        return next;
+      });
+    }
+  }
+
   function handleBulkAssign() {
     if (!assignTo || selected.size === 0) return;
     startTransition(async () => {
@@ -125,16 +144,25 @@ export function LeadsClient({ initialBusinesses, salespeople }: { initialBusines
 
       <Card>
         <Table>
-          <TableHeader><TableRow><TableHead></TableHead><TableHead>Business</TableHead><TableHead>Industry</TableHead><TableHead>City</TableHead><TableHead>Assigned to</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+          <TableHeader>
+            <TableRow>
+              <TableHead><input type="checkbox" checked={allFilteredSelected} onChange={toggleSelectAll} /></TableHead>
+              <TableHead>Business name</TableHead>
+              <TableHead>Area</TableHead>
+              <TableHead>Phone number</TableHead>
+              <TableHead>Website</TableHead>
+              <TableHead>Assigned to</TableHead>
+            </TableRow>
+          </TableHeader>
           <TableBody>
             {filtered.map((b) => (
               <TableRow key={b.id}>
                 <TableCell><input type="checkbox" checked={selected.has(b.id)} onChange={() => toggleSelect(b.id)} /></TableCell>
                 <TableCell><Link href={`/admin/businesses/${b.id}`} className="font-medium text-brand hover:underline">{b.business_name}</Link></TableCell>
-                <TableCell>{b.industry || "—"}</TableCell>
-                <TableCell>{b.city || "—"}</TableCell>
+                <TableCell>{b.city ? `${b.city}${b.state ? `, ${b.state}` : ""}` : "—"}</TableCell>
+                <TableCell className="font-mono text-text-muted">{b.phone || "—"}</TableCell>
+                <TableCell>{b.website || "—"}</TableCell>
                 <TableCell>{salespersonName(b.assigned_to)}</TableCell>
-                <TableCell><StatusBadge status={b.status} /></TableCell>
               </TableRow>
             ))}
           </TableBody>
