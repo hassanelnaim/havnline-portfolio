@@ -160,7 +160,9 @@ export function LeadsClient({ initialBusinesses, salespeople }: { initialBusines
                 <TableCell><input type="checkbox" checked={selected.has(b.id)} onChange={() => toggleSelect(b.id)} /></TableCell>
                 <TableCell><Link href={`/admin/businesses/${b.id}`} className="font-medium text-brand hover:underline">{b.business_name}</Link></TableCell>
                 <TableCell>{b.city ? `${b.city}${b.state ? `, ${b.state}` : ""}` : "—"}</TableCell>
-                <TableCell className="font-mono text-text-muted">{b.phone || "—"}</TableCell>
+                <TableCell className="font-mono text-text-muted">
+                  {b.phone ? <a href={`tel:${b.phone}`} className="text-brand hover:underline">{b.phone}</a> : "—"}
+                </TableCell>
                 <TableCell>{b.website || "—"}</TableCell>
                 <TableCell>{salespersonName(b.assigned_to)}</TableCell>
               </TableRow>

@@ -144,7 +144,7 @@ export function SalespeopleClient({ salespeople }: { salespeople: SalespersonWit
                 </div>
               </div>
               <div className="mt-0.5 text-[12px] text-text-muted">{s.email}</div>
-              {s.phone && <div className="text-[12px] text-text-muted">{s.phone}</div>}
+              {s.phone && <a href={`tel:${s.phone}`} className="text-[12px] text-brand hover:underline">{s.phone}</a>}
               <div className="mt-3 flex gap-4 text-[12.5px]">
                 <div><span className="font-semibold text-text">{s.leadCount}</span> <span className="text-text-muted">leads</span></div>
                 <div><span className="font-semibold text-text">{s.customerCount}</span> <span className="text-text-muted">customers</span></div>

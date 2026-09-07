@@ -22,12 +22,14 @@ export default async function SalesLeadsPage() {
 
       <Card className="mt-6">
         <Table>
-          <TableHeader><TableRow><TableHead>Business</TableHead><TableHead>Industry</TableHead><TableHead>City</TableHead><TableHead>Next follow-up</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+          <TableHeader><TableRow><TableHead>Business</TableHead><TableHead>Phone</TableHead><TableHead>City</TableHead><TableHead>Next follow-up</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
           <TableBody>
             {businesses.map((b) => (
               <TableRow key={b.id}>
                 <TableCell><Link href={`/sales/businesses/${b.id}`} className="font-medium text-brand hover:underline">{b.business_name}</Link></TableCell>
-                <TableCell>{b.industry || "—"}</TableCell>
+                <TableCell className="font-mono">
+                  {b.phone ? <a href={`tel:${b.phone}`} className="text-brand hover:underline">{b.phone}</a> : "—"}
+                </TableCell>
                 <TableCell>{b.city || "—"}</TableCell>
                 <TableCell>{formatDate(b.next_followup)}</TableCell>
                 <TableCell><StatusBadge status={b.status} /></TableCell>

@@ -65,7 +65,7 @@ export function BusinessDetailClient({ business, activity, isAdmin }: { business
         <div>
           <h1 className="font-display text-[24px] font-semibold text-ink">{business.business_name}</h1>
           <div className="mt-2 flex flex-wrap gap-4 text-[13px] text-text-muted">
-            {business.phone && <span className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5" /> {business.phone}</span>}
+            {business.phone && <a href={`tel:${business.phone}`} className="flex items-center gap-1.5 text-brand hover:underline"><Phone className="h-3.5 w-3.5" /> {business.phone}</a>}
             {business.website && <span className="flex items-center gap-1.5"><Globe className="h-3.5 w-3.5" /> {business.website}</span>}
             {business.city && <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" /> {business.city}, {business.state}</span>}
             {business.contact_name && <span className="flex items-center gap-1.5"><User className="h-3.5 w-3.5" /> {business.contact_name}</span>}
