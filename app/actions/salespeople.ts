@@ -78,3 +78,58 @@ export async function deactivateSalespersonAction(id: string): Promise<ActionRes
   revalidatePath("/admin/salespeople");
   return { success: true };
 }
+
+export async function reactivateSalespersonAction(id: string): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "Not authorized." };
+  }
+
+  const admin = createAdminClient();
+  const { error } = await admin.from("profiles").update({ is_active: true }).eq("id", id);
+  if (error) return { success: false, error: error.message };
+
+  revalidatePath("/admin/salespeople");
+  return { success: true };
+}
+
+/** Updates a salesperson's own profile details — name and phone. Their email/login itself isn't changed here (that's a separate, more sensitive action). */
+export async function updateSalespersonAction(id: string, input: { fullName: string; phone: string }): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "Not authorized." };
+  }
+
+  if (!input.fullName.trim()) return { success: false, error: "Name is required." };
+
+  const admin = createAdminClient();
+  const { error } = await admin.from("profiles").update({ full_name: input.fullName, phone: input.phone || null }).eq("id", id);
+  if (error) return { success: false, error: error.message };
+
+  revalidatePath("/admin/salespeople");
+  return { success: true };
+}
+
+/**
+ * Generates a fresh temporary password and sets it directly on the
+ * salesperson's real login — for when they've forgotten their
+ * password or an admin wants to reset access. Shown once, same as
+ * account creation.
+ */
+export async function resetSalespersonPasswordAction(id: string): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "Not authorized." };
+  }
+
+  const tempPassword = Math.random().toString(36).slice(2, 10) + "A1!";
+
+  const admin = createAdminClient();
+  const { error } = await admin.auth.admin.updateUserById(id, { password: tempPassword });
+  if (error) return { success: false, error: error.message };
+
+  return { success: true, tempPassword };
+}
