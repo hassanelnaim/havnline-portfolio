@@ -3,9 +3,10 @@ import { getCurrentProfile } from "@/lib/supabase/profile";
 import { computeSalespersonStats, computeRankProgress } from "@/lib/progression/engine";
 import { getAllRanks, getAllMilestones, getUnlockedMilestones, getAllPromotions, getSalespersonPromotionHistory } from "@/lib/data/progression";
 import { createClient } from "@/lib/supabase/server";
-import { formatCurrency, formatDate } from "@/lib/format";
+import { formatCurrency, formatDate, initials } from "@/lib/format";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export const dynamic = "force-dynamic";
 
@@ -31,21 +32,26 @@ export default async function SalesProgressionPage() {
 
   return (
     <div>
-      <h1 className="font-display text-[24px] font-semibold text-ink">Your Progression</h1>
-      <p className="mt-1 text-[13.5px] text-text-muted">Where you stand, and what's next.</p>
+      <div className="flex items-center gap-4">
+        <Avatar className="h-14 w-14"><AvatarFallback className="text-[16px]">{initials(profile.full_name)}</AvatarFallback></Avatar>
+        <div>
+          <h1 className="font-display text-[22px] font-semibold text-ink">{profile.full_name}</h1>
+          <p className="mt-0.5 text-[13px] text-text-muted">Member since {formatDate(profile.created_at)}</p>
+        </div>
+      </div>
 
       {/* Rank */}
       <Card className="mt-6">
         <CardContent className="p-6">
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-[11px] font-semibold uppercase tracking-wide text-text-faint">Current rank</div>
+              <div className="text-[12.5px] text-text-muted">Current rank</div>
               <div className="mt-1 flex items-center gap-2 font-display text-[26px] font-semibold" style={{ color: rankProgress.currentRank?.color || "#0B1220" }}>
                 {rankProgress.currentRank ? `${rankProgress.currentRank.badge_emoji} ${rankProgress.currentRank.name}` : "Unranked"}
               </div>
             </div>
             <div className="text-right">
-              <div className="text-[11px] font-semibold uppercase tracking-wide text-text-faint">Lifetime sold</div>
+              <div className="text-[12.5px] text-text-muted">Lifetime sold</div>
               <div className="mt-1 font-display text-[26px] font-semibold text-ink">{stats.businessesSoldLifetime}</div>
             </div>
           </div>
@@ -63,15 +69,15 @@ export default async function SalesProgressionPage() {
       </Card>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
-        <Card><CardContent className="p-5"><div className="text-[11px] font-semibold uppercase tracking-wide text-text-faint">Active customers</div><div className="mt-2 font-display text-[24px] font-semibold text-ink">{stats.activeBusinesses}</div></CardContent></Card>
-        <Card><CardContent className="p-5"><div className="text-[11px] font-semibold uppercase tracking-wide text-text-faint">Commission earned</div><div className="mt-2 font-display text-[24px] font-semibold text-ink">{formatCurrency(stats.commissionEarned)}</div></CardContent></Card>
-        <Card><CardContent className="p-5"><div className="text-[11px] font-semibold uppercase tracking-wide text-text-faint">Retention</div><div className="mt-2 font-display text-[24px] font-semibold text-ink">{stats.retentionPercent.toFixed(0)}%</div></CardContent></Card>
+        <Card><CardContent className="p-5"><div className="text-[12.5px] text-text-muted">Active customers</div><div className="mt-2 font-display text-[24px] font-semibold text-ink">{stats.activeBusinesses}</div></CardContent></Card>
+        <Card><CardContent className="p-5"><div className="text-[12.5px] text-text-muted">Commission earned</div><div className="mt-2 font-display text-[24px] font-semibold text-ink">{formatCurrency(stats.commissionEarned)}</div></CardContent></Card>
+        <Card><CardContent className="p-5"><div className="text-[12.5px] text-text-muted">Retention</div><div className="mt-2 font-display text-[24px] font-semibold text-ink">{stats.retentionPercent.toFixed(0)}%</div></CardContent></Card>
       </div>
 
       {/* Promotion */}
       <Card className="mt-6">
         <CardContent className="p-6">
-          <div className="text-[11px] font-semibold uppercase tracking-wide text-text-faint">Current position</div>
+          <div className="text-[12.5px] text-text-muted">Current position</div>
           <div className="mt-1 font-display text-[20px] font-semibold text-ink">{currentPromotion?.title || "Sales Representative"}</div>
           {nextPromotion && (
             <div className="mt-4 rounded-lg border border-border bg-paper p-4">

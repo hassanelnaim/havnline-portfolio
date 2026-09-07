@@ -6,6 +6,7 @@ import { LogOut } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOutAction } from "@/app/actions/auth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { LogoMark } from "@/components/brand/logo";
 import { initials } from "@/lib/format";
 
 export interface NavItem { href: string; label: string; icon: ReactNode; }
@@ -16,9 +17,12 @@ export function DashboardShell({ navItems, roleLabel, userName, children }: { na
   return (
     <div className="min-h-screen bg-paper">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col bg-ink py-6 lg:flex">
-        <div className="mb-1 px-4">
-          <div className="font-display text-[15px] font-semibold text-white">HavnLine</div>
-          <div className="text-[11px] uppercase tracking-wide text-[#8A90A0]">{roleLabel}</div>
+        <div className="mb-1 flex items-center gap-2.5 px-4">
+          <LogoMark className="h-8 w-8" />
+          <div>
+            <div className="font-display text-[14px] font-semibold text-white">HavnLine</div>
+            <div className="text-[11px] text-[#8A90A0]">{roleLabel} portfolio</div>
+          </div>
         </div>
         <nav className="mt-5 space-y-0.5 px-2">
           {navItems.map((item) => {

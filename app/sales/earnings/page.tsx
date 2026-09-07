@@ -23,9 +23,9 @@ export default async function EarningsPage() {
       <p className="mt-1 text-[13.5px] text-text-muted">Your commission history — amounts and status are set by your admin and can't be edited here.</p>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-card"><div className="text-[11px] font-semibold uppercase tracking-wide text-text-faint">Pending</div><div className="mt-2 font-display text-[26px] font-semibold text-warning">{formatCurrency(pending)}</div></div>
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-card"><div className="text-[11px] font-semibold uppercase tracking-wide text-text-faint">Paid</div><div className="mt-2 font-display text-[26px] font-semibold text-success">{formatCurrency(paid)}</div></div>
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-card"><div className="text-[11px] font-semibold uppercase tracking-wide text-text-faint">Lifetime</div><div className="mt-2 font-display text-[26px] font-semibold text-brand">{formatCurrency(lifetime)}</div></div>
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-card"><div className="text-[12.5px] text-text-muted">Pending</div><div className="mt-2 font-display text-[26px] font-semibold text-warning">{formatCurrency(pending)}</div></div>
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-card"><div className="text-[12.5px] text-text-muted">Paid</div><div className="mt-2 font-display text-[26px] font-semibold text-success">{formatCurrency(paid)}</div></div>
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-card"><div className="text-[12.5px] text-text-muted">Lifetime</div><div className="mt-2 font-display text-[26px] font-semibold text-brand">{formatCurrency(lifetime)}</div></div>
       </div>
 
       <Card className="mt-6">

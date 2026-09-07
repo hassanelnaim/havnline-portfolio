@@ -10,6 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
+import type { DbRank } from "@/lib/database/types";
+
 interface SalespersonWithCounts {
   id: string;
   full_name: string;
@@ -18,6 +20,7 @@ interface SalespersonWithCounts {
   is_active: boolean;
   leadCount: number;
   customerCount: number;
+  rank: DbRank | null;
 }
 
 export function SalespeopleClient({ salespeople }: { salespeople: SalespersonWithCounts[] }) {
@@ -135,7 +138,10 @@ export function SalespeopleClient({ salespeople }: { salespeople: SalespersonWit
           <Card key={s.id}>
             <CardContent className="p-5">
               <div className="flex items-start justify-between">
-                <div className="text-[14px] font-semibold text-ink">{s.full_name}</div>
+                <div>
+                  <div className="text-[14px] font-semibold text-ink">{s.full_name}</div>
+                  {s.rank && <div className="mt-0.5 text-[12px] font-medium" style={{ color: s.rank.color }}>{s.rank.badge_emoji} {s.rank.name}</div>}
+                </div>
                 <div className="flex items-center gap-2">
                   <Badge variant={s.is_active ? "success" : "neutral"}>{s.is_active ? "Active" : "Inactive"}</Badge>
                   <button onClick={() => openManage(s)} className="text-text-faint hover:text-text" aria-label="Manage salesperson">

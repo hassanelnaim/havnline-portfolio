@@ -1,5 +1,6 @@
 import { getAllSalespeople } from "@/lib/data/profiles";
 import { getAllBusinesses } from "@/lib/data/businesses";
+import { computeSalespersonStats, computeRankProgress } from "@/lib/progression/engine";
 import { SalespeopleClient } from "@/components/admin/salespeople-client";
 
 export const dynamic = "force-dynamic";
@@ -7,11 +8,18 @@ export const dynamic = "force-dynamic";
 export default async function SalespeoplePage() {
   const [salespeople, businesses] = await Promise.all([getAllSalespeople(), getAllBusinesses()]);
 
-  const withCounts = salespeople.map((s) => ({
-    ...s,
-    leadCount: businesses.filter((b) => b.assigned_to === s.id).length,
-    customerCount: businesses.filter((b) => b.assigned_to === s.id && ["paying_customer", "commission_1_pending", "commission_1_paid", "commission_2_pending", "commission_2_paid", "completed"].includes(b.status)).length,
-  }));
+  const withCounts = await Promise.all(
+    salespeople.map(async (s) => {
+      const stats = await computeSalespersonStats(s.id);
+      const rankProgress = await computeRankProgress(stats.businessesSoldLifetime);
+      return {
+        ...s,
+        leadCount: businesses.filter((b) => b.assigned_to === s.id).length,
+        customerCount: businesses.filter((b) => b.assigned_to === s.id && ["paying_customer", "commission_1_pending", "commission_1_paid", "commission_2_pending", "commission_2_paid", "completed"].includes(b.status)).length,
+        rank: rankProgress.currentRank,
+      };
+    })
+  );
 
   return (
     <div>

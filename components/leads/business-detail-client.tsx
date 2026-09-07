@@ -14,6 +14,16 @@ import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/leads/status-badge";
 import { formatDate, formatDateTime } from "@/lib/format";
 
+const STEPPER_STAGES: { label: string; statuses: PipelineStatus[] }[] = [
+  { label: "New Lead", statuses: ["new_lead"] },
+  { label: "Contacted", statuses: ["contacted"] },
+  { label: "Interested", statuses: ["interested"] },
+  { label: "Demo", statuses: ["demo"] },
+  { label: "Trial", statuses: ["trial"] },
+  { label: "Customer", statuses: ["paying_customer", "commission_1_pending", "commission_1_paid", "commission_2_pending", "commission_2_paid"] },
+  { label: "Completed", statuses: ["completed"] },
+];
+
 export function BusinessDetailClient({ business, activity, isAdmin }: { business: DbBusiness; activity: DbActivityLog[]; isAdmin: boolean }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
@@ -77,8 +87,29 @@ export function BusinessDetailClient({ business, activity, isAdmin }: { business
       <div className="mt-6 grid gap-4 lg:grid-cols-[1.3fr_1fr]">
         <div className="space-y-4">
           <Card>
-            <CardHeader><CardTitle>Update status</CardTitle></CardHeader>
+            <CardHeader><CardTitle>Pipeline status</CardTitle></CardHeader>
             <CardContent>
+              {["not_interested", "bad_fit", "cancelled", "no_response"].includes(status) ? (
+                <div className="mb-4 rounded-lg border border-danger/20 bg-danger-soft px-3.5 py-2.5 text-[13px] text-danger">
+                  Marked as: {PIPELINE_LABELS[status]}
+                </div>
+              ) : (
+                <div className="mb-4 flex items-center">
+                  {STEPPER_STAGES.map((stage, i) => {
+                    const currentIndex = STEPPER_STAGES.findIndex((s) => s.statuses.includes(status));
+                    const reached = i <= currentIndex;
+                    return (
+                      <div key={stage.label} className="flex flex-1 items-center last:flex-none">
+                        <div className="flex flex-col items-center gap-1.5">
+                          <div className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-semibold ${reached ? "bg-brand text-white" : "bg-border-soft text-text-faint"}`}>{i + 1}</div>
+                          <span className={`whitespace-nowrap text-[10.5px] ${reached ? "font-medium text-text" : "text-text-faint"}`}>{stage.label}</span>
+                        </div>
+                        {i < STEPPER_STAGES.length - 1 && <div className={`mx-1 h-0.5 flex-1 ${i < currentIndex ? "bg-brand" : "bg-border-soft"}`} />}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
               <select value={status} onChange={(e) => handleChangeStatus(e.target.value as PipelineStatus)} className="h-9 w-full rounded-lg border border-border bg-card px-3 text-[13px]">
                 {Object.entries(PIPELINE_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
               </select>
@@ -142,7 +173,7 @@ export function BusinessDetailClient({ business, activity, isAdmin }: { business
               {activity.length === 0 && <p className="text-[13px] text-text-muted">No activity logged yet.</p>}
               {activity.map((a) => (
                 <div key={a.id} className="border-l-2 border-border pl-3">
-                  <div className="text-[11px] uppercase tracking-wide text-text-faint">{a.type.replace("_", " ")}</div>
+                  <div className="text-[12px] font-medium text-brand">{a.type.replace("_", " ")}</div>
                   {a.content && <div className="text-[13px] text-text">{a.content}</div>}
                   <div className="text-[11px] text-text-faint">{formatDateTime(a.created_at)}</div>
                 </div>
