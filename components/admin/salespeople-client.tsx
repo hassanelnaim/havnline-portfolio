@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { RankBadge } from "@/components/progression/rank-badge";
 
 import type { DbRank } from "@/lib/database/types";
 
@@ -138,9 +139,12 @@ export function SalespeopleClient({ salespeople }: { salespeople: SalespersonWit
           <Card key={s.id}>
             <CardContent className="p-5">
               <div className="flex items-start justify-between">
-                <div>
-                  <div className="text-[14px] font-semibold text-ink">{s.full_name}</div>
-                  {s.rank && <div className="mt-0.5 text-[12px] font-medium" style={{ color: s.rank.color }}>{s.rank.badge_emoji} {s.rank.name}</div>}
+                <div className="flex items-center gap-3">
+                  <RankBadge rank={s.rank} size="sm" />
+                  <div>
+                    <div className="text-[14px] font-semibold text-ink">{s.full_name}</div>
+                    {s.rank && <div className="mt-0.5 text-[12px] font-medium" style={{ color: s.rank.color }}>{s.rank.name}</div>}
+                  </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <Badge variant={s.is_active ? "success" : "neutral"}>{s.is_active ? "Active" : "Inactive"}</Badge>

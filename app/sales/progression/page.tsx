@@ -1,12 +1,12 @@
 import { redirect } from "next/navigation";
 import { getCurrentProfile } from "@/lib/supabase/profile";
 import { computeSalespersonStats, computeRankProgress } from "@/lib/progression/engine";
-import { getAllRanks, getAllMilestones, getUnlockedMilestones, getAllPromotions, getSalespersonPromotionHistory } from "@/lib/data/progression";
+import { getAllMilestones, getUnlockedMilestones, getAllPromotions, getSalespersonPromotionHistory } from "@/lib/data/progression";
 import { createClient } from "@/lib/supabase/server";
-import { formatCurrency, formatDate, initials } from "@/lib/format";
+import { formatCurrency, formatDate } from "@/lib/format";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { RankBadge } from "@/components/progression/rank-badge";
 
 export const dynamic = "force-dynamic";
 
@@ -32,49 +32,44 @@ export default async function SalesProgressionPage() {
 
   return (
     <div>
-      <div className="flex items-center gap-4">
-        <Avatar className="h-14 w-14"><AvatarFallback className="text-[16px]">{initials(profile.full_name)}</AvatarFallback></Avatar>
-        <div>
-          <h1 className="font-display text-[22px] font-semibold text-ink">{profile.full_name}</h1>
-          <p className="mt-0.5 text-[13px] text-text-muted">Member since {formatDate(profile.created_at)}</p>
-        </div>
-      </div>
-
-      {/* Rank */}
-      <Card className="mt-6">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
+      {/* The one bold moment — rank is the thing this whole page exists to show, so it gets real weight, not a plain card. */}
+      <div className="overflow-hidden rounded-2xl bg-ink p-7 text-white shadow-card">
+        <div className="flex flex-wrap items-center justify-between gap-6">
+          <div className="flex items-center gap-4">
+            <RankBadge rank={rankProgress.currentRank} size="lg" />
             <div>
-              <div className="text-[12.5px] text-text-muted">Current rank</div>
-              <div className="mt-1 flex items-center gap-2 font-display text-[26px] font-semibold" style={{ color: rankProgress.currentRank?.color || "#0B1220" }}>
-                {rankProgress.currentRank ? `${rankProgress.currentRank.badge_emoji} ${rankProgress.currentRank.name}` : "Unranked"}
+              <div className="text-[12.5px] text-[#8A93A6]">{profile.full_name} · Member since {formatDate(profile.created_at)}</div>
+              <div className="mt-0.5 font-display text-[26px] font-semibold" style={{ color: rankProgress.currentRank?.color || "#fff" }}>
+                {rankProgress.currentRank?.name || "Unranked"}
               </div>
-            </div>
-            <div className="text-right">
-              <div className="text-[12.5px] text-text-muted">Lifetime sold</div>
-              <div className="mt-1 font-display text-[26px] font-semibold text-ink">{stats.businessesSoldLifetime}</div>
             </div>
           </div>
+          <div className="text-right">
+            <div className="text-[12.5px] text-[#8A93A6]">Lifetime sold</div>
+            <div className="font-display text-[34px] font-semibold text-white">{stats.businessesSoldLifetime}</div>
+          </div>
+        </div>
 
-          {rankProgress.nextRank && (
-            <div className="mt-4">
-              <div className="mb-1.5 flex justify-between text-[12px] text-text-muted">
-                <span>{rankProgress.progressCount} / {rankProgress.progressNeeded - (rankProgress.currentRank?.min_businesses_sold || 0)} to {rankProgress.nextRank.badge_emoji} {rankProgress.nextRank.name}</span>
-                <span>{rankProgress.progressPercent}%</span>
-              </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-border-soft"><div className="h-full bg-brand" style={{ width: `${rankProgress.progressPercent}%` }} /></div>
+        {rankProgress.nextRank && (
+          <div className="mt-6">
+            <div className="mb-1.5 flex justify-between text-[12px] text-[#8A93A6]">
+              <span>{rankProgress.progressCount} / {rankProgress.progressNeeded - (rankProgress.currentRank?.min_businesses_sold || 0)} to {rankProgress.nextRank.name}</span>
+              <span>{rankProgress.progressPercent}%</span>
             </div>
-          )}
-        </CardContent>
-      </Card>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+              <div className="h-full rounded-full" style={{ width: `${rankProgress.progressPercent}%`, background: `linear-gradient(90deg, ${rankProgress.currentRank?.color || "#2563EB"}, ${rankProgress.nextRank.color})` }} />
+            </div>
+          </div>
+        )}
+      </div>
 
+      {/* Everything below is functional, calm data — deliberately not competing with the banner above. */}
       <div className="mt-6 grid gap-4 sm:grid-cols-3">
         <Card><CardContent className="p-5"><div className="text-[12.5px] text-text-muted">Active customers</div><div className="mt-2 font-display text-[24px] font-semibold text-ink">{stats.activeBusinesses}</div></CardContent></Card>
         <Card><CardContent className="p-5"><div className="text-[12.5px] text-text-muted">Commission earned</div><div className="mt-2 font-display text-[24px] font-semibold text-ink">{formatCurrency(stats.commissionEarned)}</div></CardContent></Card>
         <Card><CardContent className="p-5"><div className="text-[12.5px] text-text-muted">Retention</div><div className="mt-2 font-display text-[24px] font-semibold text-ink">{stats.retentionPercent.toFixed(0)}%</div></CardContent></Card>
       </div>
 
-      {/* Promotion */}
       <Card className="mt-6">
         <CardContent className="p-6">
           <div className="text-[12.5px] text-text-muted">Current position</div>
@@ -88,19 +83,18 @@ export default async function SalesProgressionPage() {
         </CardContent>
       </Card>
 
-      {/* Milestones */}
       <div className="mt-6">
         <h2 className="mb-3 font-display text-[16px] font-semibold text-ink">Milestones</h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {visibleMilestones.map((m) => {
             const unlocked = unlockedIds.has(m.id);
             return (
-              <Card key={m.id} className={!unlocked ? "opacity-45" : undefined}>
+              <Card key={m.id} className={unlocked ? "border-achievement/30 bg-achievement-soft" : "opacity-45"}>
                 <CardContent className="p-4">
                   <div className="text-[24px]">{m.icon}</div>
                   <div className="mt-1.5 text-[13.5px] font-semibold text-ink">{m.name}</div>
                   {m.reward_description && <div className="mt-0.5 text-[12px] text-text-muted">{m.reward_description}</div>}
-                  {unlocked && <Badge variant="success" className="mt-2">Unlocked</Badge>}
+                  {unlocked && <Badge className="mt-2 bg-achievement text-white">Unlocked</Badge>}
                 </CardContent>
               </Card>
             );
@@ -108,7 +102,6 @@ export default async function SalesProgressionPage() {
         </div>
       </div>
 
-      {/* Promotion history */}
       {promotionHistory.length > 0 && (
         <div className="mt-6">
           <h2 className="mb-3 font-display text-[16px] font-semibold text-ink">Promotion history</h2>

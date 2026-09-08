@@ -15,6 +15,7 @@ const config: Config = {
         success: { DEFAULT: "#16A34A", soft: "#E5F6EA" },
         danger: { DEFAULT: "#DC2626", soft: "#FBE9E8" },
         warning: { DEFAULT: "#D97706", soft: "#FEF3E2" },
+        achievement: { DEFAULT: "#B8860B", light: "#E8B923", soft: "#FBF3DC" },
       },
       fontFamily: {
         display: ["Inter", "-apple-system", "sans-serif"],

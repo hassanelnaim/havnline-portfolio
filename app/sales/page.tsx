@@ -8,6 +8,7 @@ import { computeRankProgress, computeSalespersonStats } from "@/lib/progression/
 import { formatCurrency, formatDate, initials } from "@/lib/format";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { EmptyState } from "@/components/ui/empty-state";
+import { RankBadge } from "@/components/progression/rank-badge";
 
 export const dynamic = "force-dynamic";
 
@@ -30,12 +31,13 @@ export default async function SalesOverviewPage() {
 
   return (
     <div>
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
         <Avatar className="h-14 w-14"><AvatarFallback className="text-[16px]">{initials(profile.full_name)}</AvatarFallback></Avatar>
+        <RankBadge rank={rankProgress.currentRank} size="sm" />
         <div>
           <h1 className="font-display text-[22px] font-semibold text-ink">Welcome back, {profile.full_name.split(" ")[0]}</h1>
           <p className="mt-0.5 text-[13px] text-text-muted">
-            {rankProgress.currentRank ? `${rankProgress.currentRank.badge_emoji} ${rankProgress.currentRank.name}` : "Getting started"} · Member since {formatDate(profile.created_at)}
+            {rankProgress.currentRank?.name || "Getting started"} · Member since {formatDate(profile.created_at)}
           </p>
         </div>
       </div>
