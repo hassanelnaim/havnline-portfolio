@@ -3,14 +3,15 @@ import { useState, useMemo, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Papa from "papaparse";
-import { Upload, Filter } from "lucide-react";
+import { Upload, Filter, Trash2 } from "lucide-react";
 import type { DbBusiness, DbProfile, PipelineStatus } from "@/lib/database/types";
 import { PIPELINE_LABELS } from "@/lib/database/types";
-import { importLeadsAction, assignLeadsAction, type ImportRow } from "@/app/actions/leads";
+import { importLeadsAction, assignLeadsAction, deleteLeadsAction, type ImportRow } from "@/app/actions/leads";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 export function LeadsClient({ initialBusinesses, salespeople }: { initialBusinesses: DbBusiness[]; salespeople: DbProfile[] }) {
   const router = useRouter();
@@ -103,6 +104,26 @@ export function LeadsClient({ initialBusinesses, salespeople }: { initialBusines
     });
   }
 
+  const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  function handleConfirmDelete() {
+    setDeleting(true);
+    setDeleteError(null);
+    startTransition(async () => {
+      const result = await deleteLeadsAction(Array.from(selected));
+      setDeleting(false);
+      if (!result.success) {
+        setDeleteError(result.error || "Could not delete these leads.");
+        return;
+      }
+      setSelected(new Set());
+      setConfirmingDelete(false);
+      router.refresh();
+    });
+  }
+
   const salespersonName = (id: string | null) => salespeople.find((s) => s.id === id)?.full_name || "—";
 
   return (
@@ -137,6 +158,7 @@ export function LeadsClient({ initialBusinesses, salespeople }: { initialBusines
                 {salespeople.map((s) => <option key={s.id} value={s.id}>{s.full_name}</option>)}
               </select>
               <Button size="sm" variant="brand" onClick={handleBulkAssign} disabled={!assignTo}>Assign</Button>
+              <Button size="sm" variant="danger" onClick={() => setConfirmingDelete(true)}><Trash2 className="h-3.5 w-3.5" /> Delete</Button>
             </div>
           )}
         </CardContent>
@@ -171,6 +193,20 @@ export function LeadsClient({ initialBusinesses, salespeople }: { initialBusines
         </Table>
         {filtered.length === 0 && <div className="p-8 text-center text-[13px] text-text-muted">No leads match these filters.</div>}
       </Card>
+
+      <Dialog open={confirmingDelete} onOpenChange={(open) => !open && setConfirmingDelete(false)}>
+        <DialogContent>
+          <DialogTitle className="font-display text-[17px] font-semibold text-ink">Delete {selected.size} lead{selected.size === 1 ? "" : "s"}?</DialogTitle>
+          <DialogDescription className="mt-2 text-[13px] text-text-muted">
+            This permanently deletes the selected business{selected.size === 1 ? "" : "es"} — including all activity history and commission records tied to them. This cannot be undone.
+          </DialogDescription>
+          {deleteError && <div className="mt-3 rounded-lg border border-danger/20 bg-danger-soft px-3.5 py-2.5 text-[12.5px] text-danger">{deleteError}</div>}
+          <div className="mt-5 flex gap-2">
+            <Button variant="danger" onClick={handleConfirmDelete} disabled={deleting}>{deleting ? "Deleting…" : "Yes, delete permanently"}</Button>
+            <Button variant="outline" onClick={() => setConfirmingDelete(false)} disabled={deleting}>Cancel</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

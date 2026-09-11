@@ -114,3 +114,27 @@ export async function assignLeadsAction(businessIds: string[], salespersonId: st
   revalidatePath("/admin/leads");
   return { success: true };
 }
+
+/**
+ * Real deletion, not a status change — cascading deletes on the
+ * schema (businesses → activity_log, businesses → commissions) mean
+ * everything tied to these leads is cleaned up automatically, with
+ * no orphaned records left behind.
+ */
+export async function deleteLeadsAction(businessIds: string[]): Promise<ActionResult> {
+  try {
+    await requireAdmin();
+  } catch (err) {
+    return { success: false, error: err instanceof Error ? err.message : "Not authorized." };
+  }
+
+  if (businessIds.length === 0) return { success: false, error: "No leads selected." };
+
+  const admin = createAdminClient();
+  const { error } = await admin.from("businesses").delete().in("id", businessIds);
+  if (error) return { success: false, error: error.message };
+
+  revalidatePath("/admin/leads");
+  revalidatePath("/admin");
+  return { success: true };
+}
