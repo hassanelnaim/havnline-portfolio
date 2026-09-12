@@ -1,10 +1,10 @@
 "use client";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Plus, Trash2, Check, X } from "lucide-react";
+import { Plus, Trash2, Check, X, Pencil } from "lucide-react";
 import type { DbRank, DbMilestone, DbPromotion, DbSalespersonPromotion, DbProfile, MilestoneRequirementType, RewardType } from "@/lib/database/types";
 import {
-  createRankAction, deleteRankAction,
+  createRankAction, updateRankAction, deleteRankAction,
   createMilestoneAction, deleteMilestoneAction, toggleMilestoneActiveAction,
   createPromotionAction, deletePromotionAction,
   approvePromotionAction, denyPromotionAction,
@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { formatCurrency, formatDate } from "@/lib/format";
 
 const REQUIREMENT_TYPES: { value: MilestoneRequirementType; label: string }[] = [
@@ -72,6 +73,51 @@ export function ProgressionAdminClient({
     });
   }
   function removeRank(id: string) { startTransition(async () => { await deleteRankAction(id); router.refresh(); }); }
+
+  // ---- Edit rank dialog ----
+  const [editingRank, setEditingRank] = useState<DbRank | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editMin, setEditMin] = useState(0);
+  const [editEmoji, setEditEmoji] = useState("🏅");
+  const [editColor, setEditColor] = useState("#2563EB");
+  const [editBenefits, setEditBenefits] = useState("");
+  const [editBonus, setEditBonus] = useState(0);
+  const [editCommission, setEditCommission] = useState<string>("");
+  const [editError, setEditError] = useState<string | null>(null);
+  const [editSaving, setEditSaving] = useState(false);
+
+  function openEditRank(rank: DbRank) {
+    setEditingRank(rank);
+    setEditName(rank.name);
+    setEditMin(rank.min_businesses_sold);
+    setEditEmoji(rank.badge_emoji);
+    setEditColor(rank.color);
+    setEditBenefits(rank.benefits || "");
+    setEditBonus(rank.commission_bonus_percent);
+    setEditCommission(rank.commission_per_milestone !== null ? String(rank.commission_per_milestone) : "");
+    setEditError(null);
+  }
+
+  function saveEditRank() {
+    if (!editingRank) return;
+    setEditSaving(true);
+    setEditError(null);
+    startTransition(async () => {
+      const result = await updateRankAction(editingRank.id, {
+        name: editName, description: "", minBusinessesSold: editMin, badgeEmoji: editEmoji, color: editColor,
+        benefits: editBenefits, commissionBonusPercent: editBonus,
+        commissionPerMilestone: editCommission ? parseFloat(editCommission) : null,
+        sortOrder: editingRank.sort_order,
+      });
+      setEditSaving(false);
+      if (!result.success) {
+        setEditError(result.error || "Could not save changes.");
+        return;
+      }
+      setEditingRank(null);
+      router.refresh();
+    });
+  }
 
   // ---- Milestones form ----
   const [mName, setMName] = useState("");
@@ -171,7 +217,10 @@ export function ProgressionAdminClient({
               <CardContent className="p-5">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-[15px] font-semibold" style={{ color: r.color }}>{r.badge_emoji} {r.name}</div>
-                  <button onClick={() => removeRank(r.id)} className="text-text-faint hover:text-danger"><Trash2 className="h-3.5 w-3.5" /></button>
+                  <div className="flex items-center gap-1">
+                    <button onClick={() => openEditRank(r)} className="text-text-faint hover:text-brand" aria-label="Edit rank"><Pencil className="h-3.5 w-3.5" /></button>
+                    <button onClick={() => removeRank(r.id)} className="text-text-faint hover:text-danger" aria-label="Delete rank"><Trash2 className="h-3.5 w-3.5" /></button>
+                  </div>
                 </div>
                 <div className="mt-1 text-[12.5px] text-text-muted">{r.min_businesses_sold}+ businesses sold</div>
                 {r.benefits && <p className="mt-2 text-[12px] text-text">{r.benefits}</p>}
@@ -287,6 +336,34 @@ export function ProgressionAdminClient({
           </div>
         )}
       </TabsContent>
+
+      <Dialog open={editingRank !== null} onOpenChange={(open) => !open && setEditingRank(null)}>
+        <DialogContent>
+          <DialogTitle className="font-display text-[17px] font-semibold text-ink">Edit rank</DialogTitle>
+          <DialogDescription className="mt-1 text-[13px] text-text-muted">Changes apply immediately — any salesperson already at this rank keeps it, but the criteria and commission update right away.</DialogDescription>
+
+          <div className="mt-5 space-y-4">
+            {editError && <div className="rounded-lg border border-danger/20 bg-danger-soft px-3.5 py-2.5 text-[12.5px] text-danger">{editError}</div>}
+
+            <div><Label>Name</Label><Input className="mt-1.5" value={editName} onChange={(e) => setEditName(e.target.value)} /></div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>Min. businesses sold</Label><Input type="number" className="mt-1.5" value={editMin} onChange={(e) => setEditMin(parseInt(e.target.value) || 0)} /></div>
+              <div><Label>Badge emoji</Label><Input className="mt-1.5" value={editEmoji} onChange={(e) => setEditEmoji(e.target.value)} /></div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div><Label>Color</Label><Input type="color" className="mt-1.5 h-9" value={editColor} onChange={(e) => setEditColor(e.target.value)} /></div>
+              <div><Label>Commission per milestone ($)</Label><Input type="number" step="0.01" className="mt-1.5" value={editCommission} onChange={(e) => setEditCommission(e.target.value)} placeholder="150 (default)" /></div>
+            </div>
+            <div><Label>Commission bonus (%, optional)</Label><Input type="number" step="0.1" className="mt-1.5" value={editBonus} onChange={(e) => setEditBonus(parseFloat(e.target.value) || 0)} /></div>
+            <div><Label>Benefits</Label><Textarea rows={3} className="mt-1.5" value={editBenefits} onChange={(e) => setEditBenefits(e.target.value)} /></div>
+
+            <div className="flex gap-2">
+              <Button variant="brand" onClick={saveEditRank} disabled={editSaving || !editName.trim()}>{editSaving ? "Saving…" : "Save changes"}</Button>
+              <Button variant="outline" onClick={() => setEditingRank(null)} disabled={editSaving}>Cancel</Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Tabs>
   );
 }
