@@ -164,7 +164,8 @@ export function LeadsClient({ initialBusinesses, salespeople }: { initialBusines
         </CardContent>
       </Card>
 
-      <Card>
+      {/* Desktop/tablet: real table, unchanged. */}
+      <Card className="hidden md:block">
         <Table>
           <TableHeader>
             <TableRow>
@@ -193,6 +194,33 @@ export function LeadsClient({ initialBusinesses, salespeople }: { initialBusines
         </Table>
         {filtered.length === 0 && <div className="p-8 text-center text-[13px] text-text-muted">No leads match these filters.</div>}
       </Card>
+
+      {/* Mobile: same data and same selection state, stacked cards instead of a horizontally-scrolling table. */}
+      <div className="space-y-2.5 md:hidden">
+        {filtered.length > 0 && (
+          <label className="flex items-center gap-2 px-1 text-[12.5px] font-medium text-text-muted">
+            <input type="checkbox" checked={allFilteredSelected} onChange={toggleSelectAll} />
+            Select all
+          </label>
+        )}
+        {filtered.map((b) => (
+          <Card key={b.id} className="p-4">
+            <div className="flex items-start gap-3">
+              <input type="checkbox" checked={selected.has(b.id)} onChange={() => toggleSelect(b.id)} className="mt-1" />
+              <div className="min-w-0 flex-1">
+                <Link href={`/admin/businesses/${b.id}`} className="font-medium text-brand hover:underline">{b.business_name}</Link>
+                <div className="mt-0.5 text-[12px] text-text-muted">{b.city ? `${b.city}${b.state ? `, ${b.state}` : ""}` : "—"}</div>
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border-soft pt-2 text-[12px] text-text-muted">
+                  {b.phone ? <a href={`tel:${b.phone}`} className="font-mono text-brand hover:underline">{b.phone}</a> : <span className="font-mono">—</span>}
+                  {b.website && <span className="truncate">{b.website}</span>}
+                  <span>{salespersonName(b.assigned_to)}</span>
+                </div>
+              </div>
+            </div>
+          </Card>
+        ))}
+        {filtered.length === 0 && <Card className="p-8 text-center text-[13px] text-text-muted">No leads match these filters.</Card>}
+      </div>
 
       <Dialog open={confirmingDelete} onOpenChange={(open) => !open && setConfirmingDelete(false)}>
         <DialogContent>
