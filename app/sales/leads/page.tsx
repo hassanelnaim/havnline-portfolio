@@ -20,7 +20,8 @@ export default async function SalesLeadsPage() {
       <h1 className="font-display text-[24px] font-semibold text-ink">My Leads</h1>
       <p className="mt-1 text-[13.5px] text-text-muted">Every business assigned to you.</p>
 
-      <Card className="mt-6">
+      {/* Desktop/tablet: real table, unchanged. */}
+      <Card className="mt-6 hidden md:block">
         <Table>
           <TableHeader><TableRow><TableHead>Business</TableHead><TableHead>Phone</TableHead><TableHead>City</TableHead><TableHead>Next follow-up</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
           <TableBody>
@@ -39,6 +40,26 @@ export default async function SalesLeadsPage() {
         </Table>
         {businesses.length === 0 && <div className="p-8 text-center text-[13px] text-text-muted">No leads assigned yet — check back soon.</div>}
       </Card>
+
+      {/* Mobile: same data, stacked cards instead of a cramped, horizontally-scrolling table. */}
+      <div className="mt-6 space-y-2.5 md:hidden">
+        {businesses.map((b) => (
+          <Card key={b.id} className="p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <Link href={`/sales/businesses/${b.id}`} className="font-medium text-brand hover:underline">{b.business_name}</Link>
+                <div className="mt-0.5 text-[12px] text-text-muted">{b.city || "—"}</div>
+              </div>
+              <StatusBadge status={b.status} />
+            </div>
+            <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border-soft pt-2.5 text-[12px] text-text-muted">
+              {b.phone ? <a href={`tel:${b.phone}`} className="font-mono text-brand hover:underline">{b.phone}</a> : <span className="font-mono">—</span>}
+              <span>Next follow-up: {formatDate(b.next_followup)}</span>
+            </div>
+          </Card>
+        ))}
+        {businesses.length === 0 && <Card className="p-8 text-center text-[13px] text-text-muted">No leads assigned yet — check back soon.</Card>}
+      </div>
     </div>
   );
 }
