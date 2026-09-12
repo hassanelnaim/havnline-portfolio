@@ -42,10 +42,10 @@ export default async function SalesOverviewPage() {
         </div>
       </div>
 
-      <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mt-6 grid grid-cols-2 gap-4 lg:grid-cols-4">
         <div className="rounded-2xl border border-border bg-card p-5 shadow-card"><div className="flex items-center justify-between"><span className="text-[12.5px] text-text-muted">My leads</span><Users className="h-4 w-4 text-brand" /></div><div className="mt-2 font-display text-[28px] font-semibold text-ink">{businesses.length}</div></div>
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-card"><div className="flex items-center justify-between"><span className="text-[12.5px] text-text-muted">My customers</span><UserCheck className="h-4 w-4 text-success" /></div><div className="mt-2 font-display text-[28px] font-semibold text-ink">{customers}</div></div>
         <div className="rounded-2xl border border-border bg-card p-5 shadow-card"><div className="flex items-center justify-between"><span className="text-[12.5px] text-text-muted">Calls made</span><PhoneCall className="h-4 w-4 text-brand" /></div><div className="mt-2 font-display text-[28px] font-semibold text-ink">{totalCalls}</div></div>
+        <div className="rounded-2xl border border-border bg-card p-5 shadow-card"><div className="flex items-center justify-between"><span className="text-[12.5px] text-text-muted">My customers</span><UserCheck className="h-4 w-4 text-success" /></div><div className="mt-2 font-display text-[28px] font-semibold text-ink">{customers}</div></div>
         <div className="rounded-2xl border border-border bg-card p-5 shadow-card"><div className="flex items-center justify-between"><span className="text-[12.5px] text-text-muted">Pending commission</span><DollarSign className="h-4 w-4 text-warning" /></div><div className="mt-2 font-display text-[28px] font-semibold text-ink">{formatCurrency(pending)}</div></div>
       </div>
 
