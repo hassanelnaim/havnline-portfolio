@@ -48,11 +48,26 @@ export function ProgressionAdminClient({
   const [rankColor, setRankColor] = useState("#2563EB");
   const [rankBenefits, setRankBenefits] = useState("");
   const [rankBonus, setRankBonus] = useState(0);
+  const [rankCommission, setRankCommission] = useState<string>("");
+  const [rankError, setRankError] = useState<string | null>(null);
+  const [rankSaving, setRankSaving] = useState(false);
 
   function addRank() {
+    setRankSaving(true);
+    setRankError(null);
     startTransition(async () => {
-      await createRankAction({ name: rankName, description: "", minBusinessesSold: rankMin, badgeEmoji: rankEmoji, color: rankColor, benefits: rankBenefits, commissionBonusPercent: rankBonus, sortOrder: ranks.length });
-      setRankName(""); setRankMin(0); setRankBenefits(""); setRankBonus(0);
+      const result = await createRankAction({
+        name: rankName, description: "", minBusinessesSold: rankMin, badgeEmoji: rankEmoji, color: rankColor,
+        benefits: rankBenefits, commissionBonusPercent: rankBonus,
+        commissionPerMilestone: rankCommission ? parseFloat(rankCommission) : null,
+        sortOrder: ranks.length,
+      });
+      setRankSaving(false);
+      if (!result.success) {
+        setRankError(result.error || "Could not save this rank.");
+        return;
+      }
+      setRankName(""); setRankMin(0); setRankBenefits(""); setRankBonus(0); setRankCommission("");
       router.refresh();
     });
   }
@@ -66,14 +81,23 @@ export function ProgressionAdminClient({
   const [mRewardType, setMRewardType] = useState<RewardType>("recognition");
   const [mRewardDesc, setMRewardDesc] = useState("");
   const [mRewardAmount, setMRewardAmount] = useState<string>("");
+  const [milestoneError, setMilestoneError] = useState<string | null>(null);
+  const [milestoneSaving, setMilestoneSaving] = useState(false);
 
   function addMilestone() {
+    setMilestoneSaving(true);
+    setMilestoneError(null);
     startTransition(async () => {
-      await createMilestoneAction({
+      const result = await createMilestoneAction({
         name: mName, description: "", icon: mIcon, requirementType: mReqType, requirementValue: mReqValue,
         rewardType: mRewardType, rewardDescription: mRewardDesc, rewardAmount: mRewardAmount ? parseFloat(mRewardAmount) : null,
         isVisible: true, sortOrder: milestones.length,
       });
+      setMilestoneSaving(false);
+      if (!result.success) {
+        setMilestoneError(result.error || "Could not save this milestone.");
+        return;
+      }
       setMName(""); setMReqValue(1); setMRewardDesc(""); setMRewardAmount("");
       router.refresh();
     });
@@ -87,13 +111,22 @@ export function ProgressionAdminClient({
   const [pRetention, setPRetention] = useState<string>("");
   const [pBenefits, setPBenefits] = useState("");
   const [pApproval, setPApproval] = useState<"automatic" | "admin_approval">("automatic");
+  const [promotionError, setPromotionError] = useState<string | null>(null);
+  const [promotionSaving, setPromotionSaving] = useState(false);
 
   function addPromotion() {
+    setPromotionSaving(true);
+    setPromotionError(null);
     startTransition(async () => {
-      await createPromotionAction({
+      const result = await createPromotionAction({
         title: pTitle, description: "", requiredBusinessesSold: pRequired,
         requiredRetentionPercent: pRetention ? parseFloat(pRetention) : null, benefits: pBenefits, approvalType: pApproval, sortOrder: promotions.length,
       });
+      setPromotionSaving(false);
+      if (!result.success) {
+        setPromotionError(result.error || "Could not save this promotion.");
+        return;
+      }
       setPTitle(""); setPRequired(0); setPRetention(""); setPBenefits("");
       router.refresh();
     });
@@ -117,13 +150,18 @@ export function ProgressionAdminClient({
         <Card className="mb-4">
           <CardHeader><CardTitle>Add a rank</CardTitle><CardDescription>Ordered automatically by minimum businesses sold.</CardDescription></CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-3">
+            {rankError && <div className="sm:col-span-3 rounded-lg border border-danger/20 bg-danger-soft px-3.5 py-2.5 text-[12.5px] text-danger">{rankError}</div>}
             <div><Label>Name</Label><Input className="mt-1.5" value={rankName} onChange={(e) => setRankName(e.target.value)} placeholder="Elite Seller" /></div>
             <div><Label>Min. businesses sold</Label><Input type="number" className="mt-1.5" value={rankMin} onChange={(e) => setRankMin(parseInt(e.target.value) || 0)} /></div>
             <div><Label>Badge emoji</Label><Input className="mt-1.5" value={rankEmoji} onChange={(e) => setRankEmoji(e.target.value)} /></div>
             <div><Label>Color</Label><Input type="color" className="mt-1.5 h-9" value={rankColor} onChange={(e) => setRankColor(e.target.value)} /></div>
-            <div><Label>Commission bonus (%)</Label><Input type="number" step="0.1" className="mt-1.5" value={rankBonus} onChange={(e) => setRankBonus(parseFloat(e.target.value) || 0)} /></div>
+            <div>
+              <Label>Commission per milestone ($)</Label>
+              <Input type="number" step="0.01" className="mt-1.5" value={rankCommission} onChange={(e) => setRankCommission(e.target.value)} placeholder="150 (default if left blank)" />
+            </div>
+            <div><Label>Commission bonus (%, optional, separate from above)</Label><Input type="number" step="0.1" className="mt-1.5" value={rankBonus} onChange={(e) => setRankBonus(parseFloat(e.target.value) || 0)} /></div>
             <div className="sm:col-span-3"><Label>Benefits</Label><Textarea rows={2} className="mt-1.5" value={rankBenefits} onChange={(e) => setRankBenefits(e.target.value)} /></div>
-            <Button size="sm" variant="brand" onClick={addRank} disabled={!rankName.trim()}><Plus className="h-3.5 w-3.5" /> Add rank</Button>
+            <Button size="sm" variant="brand" onClick={addRank} disabled={!rankName.trim() || rankSaving}>{rankSaving ? "Saving…" : <><Plus className="h-3.5 w-3.5" /> Add rank</>}</Button>
           </CardContent>
         </Card>
 
@@ -137,7 +175,8 @@ export function ProgressionAdminClient({
                 </div>
                 <div className="mt-1 text-[12.5px] text-text-muted">{r.min_businesses_sold}+ businesses sold</div>
                 {r.benefits && <p className="mt-2 text-[12px] text-text">{r.benefits}</p>}
-                {r.commission_bonus_percent > 0 && <div className="mt-2 text-[12px] font-medium text-success">+{r.commission_bonus_percent}% commission bonus</div>}
+                {r.commission_per_milestone !== null && <div className="mt-2 text-[12px] font-semibold text-success">${Number(r.commission_per_milestone).toFixed(2)} per milestone</div>}
+                {r.commission_bonus_percent > 0 && <div className="mt-1 text-[11.5px] text-text-muted">+{r.commission_bonus_percent}% bonus</div>}
               </CardContent>
             </Card>
           ))}
@@ -148,6 +187,7 @@ export function ProgressionAdminClient({
         <Card className="mb-4">
           <CardHeader><CardTitle>Add a milestone</CardTitle></CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-2">
+            {milestoneError && <div className="sm:col-span-2 rounded-lg border border-danger/20 bg-danger-soft px-3.5 py-2.5 text-[12.5px] text-danger">{milestoneError}</div>}
             <div><Label>Name</Label><Input className="mt-1.5" value={mName} onChange={(e) => setMName(e.target.value)} placeholder="Double Digits" /></div>
             <div><Label>Icon</Label><Input className="mt-1.5" value={mIcon} onChange={(e) => setMIcon(e.target.value)} /></div>
             <div>
@@ -165,7 +205,7 @@ export function ProgressionAdminClient({
             </div>
             <div><Label>Reward amount ($, optional)</Label><Input type="number" step="0.01" className="mt-1.5" value={mRewardAmount} onChange={(e) => setMRewardAmount(e.target.value)} /></div>
             <div className="sm:col-span-2"><Label>Reward description</Label><Input className="mt-1.5" value={mRewardDesc} onChange={(e) => setMRewardDesc(e.target.value)} placeholder="$500 bonus" /></div>
-            <Button size="sm" variant="brand" onClick={addMilestone} disabled={!mName.trim()}><Plus className="h-3.5 w-3.5" /> Add milestone</Button>
+            <Button size="sm" variant="brand" onClick={addMilestone} disabled={!mName.trim() || milestoneSaving}>{milestoneSaving ? "Saving…" : <><Plus className="h-3.5 w-3.5" /> Add milestone</>}</Button>
           </CardContent>
         </Card>
 
@@ -191,6 +231,7 @@ export function ProgressionAdminClient({
         <Card className="mb-4">
           <CardHeader><CardTitle>Add a promotion</CardTitle></CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-2">
+            {promotionError && <div className="sm:col-span-2 rounded-lg border border-danger/20 bg-danger-soft px-3.5 py-2.5 text-[12.5px] text-danger">{promotionError}</div>}
             <div className="sm:col-span-2"><Label>Title</Label><Input className="mt-1.5" value={pTitle} onChange={(e) => setPTitle(e.target.value)} placeholder="Senior Sales Representative" /></div>
             <div><Label>Required businesses sold</Label><Input type="number" className="mt-1.5" value={pRequired} onChange={(e) => setPRequired(parseInt(e.target.value) || 0)} /></div>
             <div><Label>Required retention % (optional)</Label><Input type="number" step="0.1" className="mt-1.5" value={pRetention} onChange={(e) => setPRetention(e.target.value)} /></div>
@@ -202,7 +243,7 @@ export function ProgressionAdminClient({
                 <option value="admin_approval">Requires admin approval</option>
               </select>
             </div>
-            <Button size="sm" variant="brand" onClick={addPromotion} disabled={!pTitle.trim()} className="self-end"><Plus className="h-3.5 w-3.5" /> Add promotion</Button>
+            <Button size="sm" variant="brand" onClick={addPromotion} disabled={!pTitle.trim() || promotionSaving} className="self-end">{promotionSaving ? "Saving…" : <><Plus className="h-3.5 w-3.5" /> Add promotion</>}</Button>
           </CardContent>
         </Card>
 

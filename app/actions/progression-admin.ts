@@ -25,6 +25,7 @@ export interface RankInput {
   color: string;
   benefits: string;
   commissionBonusPercent: number;
+  commissionPerMilestone: number | null;
   sortOrder: number;
 }
 
@@ -35,7 +36,7 @@ export async function createRankAction(input: RankInput): Promise<ActionResult> 
   const { error } = await admin.from("ranks").insert({
     name: input.name, description: input.description || null, min_businesses_sold: input.minBusinessesSold,
     badge_emoji: input.badgeEmoji || "🏅", color: input.color || "#2563EB", benefits: input.benefits || null,
-    commission_bonus_percent: input.commissionBonusPercent || 0, sort_order: input.sortOrder,
+    commission_bonus_percent: input.commissionBonusPercent || 0, commission_per_milestone: input.commissionPerMilestone, sort_order: input.sortOrder,
   });
   if (error) return { success: false, error: error.message };
 
@@ -50,7 +51,7 @@ export async function updateRankAction(id: string, input: RankInput): Promise<Ac
   const { error } = await admin.from("ranks").update({
     name: input.name, description: input.description || null, min_businesses_sold: input.minBusinessesSold,
     badge_emoji: input.badgeEmoji, color: input.color, benefits: input.benefits || null,
-    commission_bonus_percent: input.commissionBonusPercent, sort_order: input.sortOrder,
+    commission_bonus_percent: input.commissionBonusPercent, commission_per_milestone: input.commissionPerMilestone, sort_order: input.sortOrder,
   }).eq("id", id);
   if (error) return { success: false, error: error.message };
 

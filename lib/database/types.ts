@@ -106,6 +106,7 @@ export interface DbRank {
   color: string;
   benefits: string | null;
   commission_bonus_percent: number;
+  commission_per_milestone: number | null;
   sort_order: number;
   is_active: boolean;
   created_at: ISODateTime;

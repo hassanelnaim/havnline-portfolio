@@ -3,8 +3,26 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { runProgressionEvaluation } from "@/lib/progression/engine";
+import { runProgressionEvaluation, computeSalespersonStats, computeRankProgress } from "@/lib/progression/engine";
 import type { ActionResult } from "./salespeople";
+
+const DEFAULT_COMMISSION_AMOUNT = 150.0;
+
+/**
+ * Resolves the REAL commission amount for one milestone, based on the
+ * salesperson's current rank. If their rank has a specific per-milestone
+ * amount set, that replaces the $150 default entirely — this is what
+ * makes rank progression actually mean something financially, not
+ * just a badge.
+ */
+async function resolveCommissionAmount(salespersonId: string): Promise<number> {
+  const stats = await computeSalespersonStats(salespersonId);
+  const { currentRank } = await computeRankProgress(stats.businessesSoldLifetime);
+  if (currentRank?.commission_per_milestone !== null && currentRank?.commission_per_milestone !== undefined) {
+    return Number(currentRank.commission_per_milestone);
+  }
+  return DEFAULT_COMMISSION_AMOUNT;
+}
 
 async function requireAdmin(): Promise<void> {
   const supabase = createClient();
@@ -41,8 +59,9 @@ export async function markFirstMonthCompleteAction(businessId: string): Promise<
     .eq("id", businessId);
   if (businessError) return { success: false, error: businessError.message };
 
+  const commissionAmount = await resolveCommissionAmount(business.assigned_to);
   const { error: commissionError } = await admin.from("commissions").upsert(
-    { business_id: businessId, salesperson_id: business.assigned_to, commission_number: 1, amount: 150.0, status: "pending", eligible_date: today },
+    { business_id: businessId, salesperson_id: business.assigned_to, commission_number: 1, amount: commissionAmount, status: "pending", eligible_date: today },
     { onConflict: "business_id,commission_number" }
   );
   if (commissionError) return { success: false, error: commissionError.message };
@@ -75,8 +94,9 @@ export async function markSecondMonthCompleteAction(businessId: string): Promise
     .eq("id", businessId);
   if (businessError) return { success: false, error: businessError.message };
 
+  const commissionAmount = await resolveCommissionAmount(business.assigned_to);
   const { error: commissionError } = await admin.from("commissions").upsert(
-    { business_id: businessId, salesperson_id: business.assigned_to, commission_number: 2, amount: 150.0, status: "pending", eligible_date: today },
+    { business_id: businessId, salesperson_id: business.assigned_to, commission_number: 2, amount: commissionAmount, status: "pending", eligible_date: today },
     { onConflict: "business_id,commission_number" }
   );
   if (commissionError) return { success: false, error: commissionError.message };
