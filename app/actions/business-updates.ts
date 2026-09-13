@@ -18,6 +18,22 @@ async function requireUser() {
   return { supabase, userId: user.id };
 }
 
+/**
+ * Revalidates every page that could be showing stale data after a
+ * business is updated — not just the business's own detail page.
+ * Missing this for the Overview pages was the exact bug behind
+ * "calls made" not updating after logging a call: only the detail
+ * page itself was ever being told to refresh.
+ */
+function revalidateAllRelevantPaths(businessId: string) {
+  revalidatePath(`/sales/businesses/${businessId}`);
+  revalidatePath(`/admin/businesses/${businessId}`);
+  revalidatePath("/sales");
+  revalidatePath("/admin");
+  revalidatePath("/sales/leads");
+  revalidatePath("/admin/leads");
+}
+
 export async function logCallAction(businessId: string, note: string): Promise<ActionResult> {
   let ctx;
   try {
@@ -37,8 +53,7 @@ export async function logCallAction(businessId: string, note: string): Promise<A
 
   await ctx.supabase.from("activity_log").insert({ business_id: businessId, salesperson_id: ctx.userId, type: "call", content: note || null });
 
-  revalidatePath(`/sales/businesses/${businessId}`);
-  revalidatePath(`/admin/businesses/${businessId}`);
+  revalidateAllRelevantPaths(businessId);
   return { success: true };
 }
 
@@ -55,8 +70,7 @@ export async function addNoteAction(businessId: string, note: string): Promise<A
   const { error } = await ctx.supabase.from("activity_log").insert({ business_id: businessId, salesperson_id: ctx.userId, type: "note", content: note });
   if (error) return { success: false, error: error.message };
 
-  revalidatePath(`/sales/businesses/${businessId}`);
-  revalidatePath(`/admin/businesses/${businessId}`);
+  revalidateAllRelevantPaths(businessId);
   return { success: true };
 }
 
@@ -73,8 +87,7 @@ export async function scheduleFollowupAction(businessId: string, date: string): 
 
   await ctx.supabase.from("activity_log").insert({ business_id: businessId, salesperson_id: ctx.userId, type: "followup_scheduled", content: `Follow-up scheduled for ${date}` });
 
-  revalidatePath(`/sales/businesses/${businessId}`);
-  revalidatePath(`/admin/businesses/${businessId}`);
+  revalidateAllRelevantPaths(businessId);
   return { success: true };
 }
 
@@ -91,10 +104,7 @@ export async function changeStatusAction(businessId: string, status: PipelineSta
 
   await ctx.supabase.from("activity_log").insert({ business_id: businessId, salesperson_id: ctx.userId, type: "status_change", content: `Status changed to ${status}` });
 
-  revalidatePath(`/sales/businesses/${businessId}`);
-  revalidatePath(`/admin/businesses/${businessId}`);
-  revalidatePath("/sales/leads");
-  revalidatePath("/admin/leads");
+  revalidateAllRelevantPaths(businessId);
   return { success: true };
 }
 
@@ -109,7 +119,6 @@ export async function startTrialAction(businessId: string, trialStart: string, t
   const { error } = await ctx.supabase.from("businesses").update({ status: "trial", trial_start: trialStart, trial_end: trialEnd }).eq("id", businessId);
   if (error) return { success: false, error: error.message };
 
-  revalidatePath(`/sales/businesses/${businessId}`);
-  revalidatePath(`/admin/businesses/${businessId}`);
+  revalidateAllRelevantPaths(businessId);
   return { success: true };
 }
