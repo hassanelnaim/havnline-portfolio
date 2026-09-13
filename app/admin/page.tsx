@@ -12,17 +12,17 @@ import { PIPELINE_LABELS } from "@/lib/database/types";
 
 export const dynamic = "force-dynamic";
 
-const ACTIVITY_VERBS: Record<string, string> = {
-  call: "logged a call with",
-  note: "left a note on",
-  status_change: "updated the status of",
-  followup_scheduled: "scheduled a follow-up for",
-};
-
 export default async function AdminOverviewPage() {
-  const [businesses, commissions, salespeople, recentActivity] = await Promise.all([
-    getAllBusinesses(), getAllCommissions(), getAllSalespeople(), getRecentActivityCompanyWide(8),
+  const [businesses, commissions, salespeople, recentActivityRaw] = await Promise.all([
+    getAllBusinesses(), getAllCommissions(), getAllSalespeople(), getRecentActivityCompanyWide(40),
   ]);
+
+  // Only the moments that actually matter for a quick glance — real
+  // interest signals and real trial starts — not every routine call
+  // log or minor status shuffle.
+  const recentActivity = recentActivityRaw
+    .filter((a: any) => a.type === "status_change" && (a.content?.includes("interested") || a.content?.includes("trial")))
+    .slice(0, 8);
 
   const unassigned = businesses.filter((b) => !b.assigned_to).length;
   const called = businesses.filter((b) => b.call_attempts > 0).length;
@@ -96,17 +96,24 @@ export default async function AdminOverviewPage() {
 
           <div className="rounded-2xl border border-border bg-card p-5 shadow-card">
             <h2 className="font-display text-[15px] font-semibold text-ink">Recent activity</h2>
+            <p className="mt-0.5 text-[11.5px] text-text-faint">Real interest signals and trial starts — not every routine update.</p>
             {recentActivity.length === 0 ? (
-              <p className="mt-3 text-[13px] text-text-muted">Nothing logged yet — activity from every business will show up here as your team works their leads.</p>
+              <p className="mt-3 text-[13px] text-text-muted">Nothing to show yet — this fills in as leads turn interested or start their trial.</p>
             ) : (
               <div className="mt-3 divide-y divide-border-soft">
-                {recentActivity.map((a: any) => (
-                  <div key={a.id} className="py-3 text-[13px] text-text">
-                    <span className="text-text-muted">{ACTIVITY_VERBS[a.type] || "updated"}</span>{" "}
-                    <span className="font-medium">{a.businesses?.business_name || "a business"}</span>
-                    {a.content && <div className="mt-0.5 text-[12.5px] text-text-muted">&ldquo;{a.content}&rdquo;</div>}
-                  </div>
-                ))}
+                {recentActivity.map((a: any) => {
+                  const isTrial = a.content?.includes("trial");
+                  const isNotInterested = a.content?.includes("not_interested");
+                  const color = isTrial ? "border-brand bg-brand-soft" : isNotInterested ? "border-danger bg-danger-soft" : "border-success bg-success-soft";
+                  const label = isTrial ? "Started trial" : isNotInterested ? "Not interested" : "Interested";
+                  const textColor = isTrial ? "text-brand-dark" : isNotInterested ? "text-danger" : "text-success";
+                  return (
+                    <div key={a.id} className={`my-1.5 rounded-lg border-l-4 py-2.5 pl-3 pr-2 ${color}`}>
+                      <span className={`text-[11.5px] font-semibold uppercase tracking-wide ${textColor}`}>{label}</span>
+                      <div className="mt-0.5 text-[13px] font-medium text-ink">{a.businesses?.business_name || "a business"}</div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
