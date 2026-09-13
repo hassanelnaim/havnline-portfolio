@@ -74,7 +74,7 @@ export async function addNoteAction(businessId: string, note: string): Promise<A
   return { success: true };
 }
 
-export async function scheduleFollowupAction(businessId: string, date: string): Promise<ActionResult> {
+export async function scheduleFollowupAction(businessId: string, date: string, note: string): Promise<ActionResult> {
   let ctx;
   try {
     ctx = await requireUser();
@@ -85,7 +85,8 @@ export async function scheduleFollowupAction(businessId: string, date: string): 
   const { error } = await ctx.supabase.from("businesses").update({ next_followup: date }).eq("id", businessId);
   if (error) return { success: false, error: error.message };
 
-  await ctx.supabase.from("activity_log").insert({ business_id: businessId, salesperson_id: ctx.userId, type: "followup_scheduled", content: `Follow-up scheduled for ${date}` });
+  const content = note.trim() ? `Follow-up on ${date}: ${note.trim()}` : `Follow-up scheduled for ${date}`;
+  await ctx.supabase.from("activity_log").insert({ business_id: businessId, salesperson_id: ctx.userId, type: "followup_scheduled", content });
 
   revalidateAllRelevantPaths(businessId);
   return { success: true };
